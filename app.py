@@ -4,8 +4,8 @@ import plotly.graph_objects as go
 # 1. Configuração da Página Web
 st.set_page_config(page_title="Investigação Habitação", page_icon="🏠", layout="wide")
 
-st.title("Investigação de Dados: O Custo Real da Habitação")
-st.markdown("Plataforma independente de análise do impacto do mercado imobiliário nos rendimentos reais em Portugal.")
+st.title("Análise de Dados: O Custo Real da Habitação")
+#st.markdown("Plataforma independente de análise do impacto do mercado imobiliário nos rendimentos reais em Portugal.")
 
 # Função para estimar o Salário Líquido aproximado (Trabalhador Dependente, Solteiro, Sem Filhos)
 def calcular_salario_liquido(bruto):
@@ -118,7 +118,6 @@ with tab_pessoal:
 # ==========================================
 with tab_desigualdade:
     st.subheader("Auditoria Líquida: Salário Mínimo vs. Salário Médio Nacional")
-    st.markdown("A ilusão estatística cai quando removemos os impostos estatais automática da folha de vencimento.")
 
     fosso_bruto = (preco_m2 / SALARIO_MINIMO_BRUTO) - (preco_m2 / SALARIO_MEDIO_BRUTO)
     fosso_liquido = meses_1m2_liquido_minimo = (preco_m2 / SALARIO_MINIMO_LIQUIDO) - (preco_m2 / SALARIO_MEDIO_LIQUIDO)
