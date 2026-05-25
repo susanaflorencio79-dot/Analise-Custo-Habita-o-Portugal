@@ -73,20 +73,20 @@ with tab_pessoal:
     st.subheader("Análise de Viabilidade Real (Financiamento a 90%)")
     
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Custo Total do Imóvel", f"{total_casa:,.2f} €".replace(',', 'X').replace('.', ',').replace('X', '.'))
-    col2.metric("Montante a Financiar", f"{v_emp:,.2f} €".replace(',', 'X').replace('.', ',').replace('X', '.'))
-    col3.metric("Salário Bruto Introduzido", f"{salario_bruto:,.2f} €".replace(',', 'X').replace('.', ',').replace('X', '.'))
-    col4.metric("Salário Líquido Estimado", f"{salario_liquido:,.2f} €".replace(',', 'X').replace('.', ',').replace('X', '.'))
+    col1.metric("Custo Total do Imóvel", f"{total_casa:,.0f} €".replace(',', 'X').replace('.', ',').replace('X', '.'))
+    col2.metric("Montante a Financiar", f"{v_emp:,.0f} €".replace(',', 'X').replace('.', ',').replace('X', '.'))
+    col3.metric("Salário Bruto Introduzido", f"{salario_bruto:,.0f} €".replace(',', 'X').replace('.', ',').replace('X', '.'))
+    col4.metric("Salário Líquido Estimado", f"{salario_liquido:,.0f} €".replace(',', 'X').replace('.', ',').replace('X', '.'))
 
     # Alerta baseado no Esforço Líquido (A realidade bancária prática)
     if t_esforco_liquido <= 33:
-        st.success(f"✅ Prestação Mensal: **{prestacao:,.2f} €** | Taxa de Esforço Líquida: **{t_esforco_liquido:.1f}%** (Cenário Seguro e Sustentável)")
+        st.success(f"✅ Prestação Mensal: **{prestacao:,.0f} €** | Taxa de Esforço Líquida: **{t_esforco_liquido:.1f}%** (Cenário Seguro e Sustentável)")
         cor_esforco = '#22c55e'
     elif t_esforco_liquido <= 50:
-        st.warning(f"⚠️ Prestação Mensal: **{prestacao:,.2f} €** | Taxa de Esforço Líquida: **{t_esforco_liquido:.1f}%** (Zona de Risco. O orçamento mensal fica apertado)")
+        st.warning(f"⚠️ Prestação Mensal: **{prestacao:,.0f} €** | Taxa de Esforço Líquida: **{t_esforco_liquido:.1f}%** (Zona de Risco. O orçamento mensal fica apertado)")
         cor_esforco = '#f59e0b'
     else:
-        st.error(f"🚨 Prestação Mensal: **{prestacao:,.2f} €** | Taxa de Esforço Líquida: **{t_esforco_liquido:.1f}%** (Zona Crítica. Sobram apenas {(salario_liquido - prestacao):,.2f}€ para o resto do mês)")
+        st.error(f"🚨 Prestação Mensal: **{prestacao:,.0f} €** | Taxa de Esforço Líquida: **{t_esforco_liquido:.1f}%** (Zona Crítica. Sobram apenas {(salario_liquido - prestacao):.0f}€ para o resto do mês)")
         cor_esforco = '#ef4444'
 
     st.markdown("### Comparação de Impacto: Rendimento Bruto vs. Rendimento Líquido")
