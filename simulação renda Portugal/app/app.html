@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="pt-PT" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Crédito Habitação PT</title>
+    <style>
+        /* --- VARIÁVEIS DE TEMA (CLARO / ESCURO) --- */
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --input-bg: #ffffff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --purple: #8b5cf6;
+            --highlight-bg: #eff6ff;
+            --highlight-border: #bfdbfe;
+        }
+
+        [data-theme="dark"] {
+            --primary: #5353c4;
+            --primary-hover: #818cf8;
+            --bg: #000000;
+            --card-bg: #17202f;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #222e3e;
+            --input-bg: #0f172a;
+            --highlight-bg: #172554;
+            --highlight-border: #1e3a8a;
+        }
+
+        /* --- BASE E LAYOUT --- */
+        * { box-sizing: border-box; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        body { 
+            background-color: var(--bg); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 20px; 
+            line-height: 1.6; 
+            transition: background-color 0.3s ease, color 0.3s ease; 
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        /* Nova Barra Superior para o Botão */
+        .top-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+
+        /* Botão Tema Corrigido */
+        .theme-toggle {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .theme-toggle:hover { background: var(--border); }
+
+        header { text-align: center; margin-bottom: 40px; margin-top: 10px; }
+        h1 { color: var(--primary); margin-bottom: 10px; font-weight: 800; }
+        
+        /* --- COMPONENTES --- */
+        .card { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border); 
+            border-radius: 16px; 
+            padding: 30px; 
+            margin-bottom: 25px; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        .card h2 { margin-top: 0; border-bottom: 2px solid var(--border); padding-bottom: 12px; font-size: 1.3rem; transition: border-color 0.3s ease;}
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+        @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+        
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.95rem; color: var(--text-main); transition: color 0.3s ease;}
+        input[type="number"], select { 
+            width: 100%; 
+            padding: 12px; 
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border); 
+            border-radius: 8px; 
+            font-size: 1rem; 
+            transition: all 0.3s ease;
+        }
+        input[type="number"]:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); }
+        
+        .radio-group { display: flex; gap: 20px; margin-bottom: 16px; flex-wrap: wrap; }
+        .radio-item { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        
+        .btn { 
+            display: block; width: 100%; background: var(--primary); color: #ffffff; 
+            border: none; padding: 16px; font-size: 1.1rem; font-weight: 700; 
+            border-radius: 12px; cursor: pointer; transition: background 0.2s, transform 0.1s; 
+            margin-top: 25px; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);
+        }
+        .btn:hover { background: var(--primary-hover); }
+        .btn:active { transform: scale(0.98); }
+        
+        .results-area { display: none; margin-top: 40px; }
+        .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 24px; }
+        .metric-card { 
+            background: var(--bg); padding: 24px; border-radius: 12px; text-align: center; 
+            border: 1px solid var(--border); transition: all 0.3s ease;
+        }
+        .metric-card.highlight { background: var(--highlight-bg); border-color: var(--highlight-border); }
+        .metric-value { font-size: 1.8rem; font-weight: 800; color: var(--primary); margin: 12px 0 6px 0; }
+        .metric-value.highlight-text { color: var(--purple); }
+        .metric-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .alert { padding: 16px; border-radius: 10px; margin-bottom: 16px; font-weight: 500; }
+        .alert-info { background: #eff6ff; color: #1e3a8a; border: 1px solid #bfdbfe; }
+        .alert-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .alert-warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+        .alert-danger { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        
+        [data-theme="dark"] .alert-info { background: #172554; color: #bfdbfe; border-color: #1e3a8a; }
+        [data-theme="dark"] .alert-success { background: #064e3b; color: #a7f3d0; border-color: #065f46; }
+        [data-theme="dark"] .alert-warning { background: #78350f; color: #fde68a; border-color: #92400e; }
+        [data-theme="dark"] .alert-danger { background: #7f1d1d; color: #fecaca; border-color: #991b1b; }
+
+        .progress-bar { height: 12px; background: var(--border); border-radius: 6px; overflow: hidden; margin-top: 12px; }
+        .progress-fill { height: 100%; transition: width 0.5s ease-out; }
+        
+        .hidden { display: none !important; }
+        hr { border: 0; border-top: 1px solid var(--border); margin: 24px 0; transition: border-color 0.3s ease; }
+        
+        .taxa-box { background: var(--bg); border: 1px solid var(--border); padding: 16px; border-radius: 12px; transition: all 0.3s ease; }
+        .list-group { list-style: none; padding: 0; margin: 0; }
+        .list-group li { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--border); font-size: 1rem; transition: border-color 0.3s ease;}
+        .list-group li:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="top-bar">
+        <button id="theme-toggle" class="theme-toggle">🌙 Modo Escuro</button>
+    </div>
+
+    <header>
+        <h1>🏠 Simulação de Crédito Habitação</h1>
+        <p style="color: var(--text-muted); font-size: 1.1rem;">Preveja 100% dos custos reais, impostos e despesas mensais para uma decisão segura.</p>
+    </header>
+
+    <div class="card">
+        <h2>1. Finalidade e Perfil</h2>
+        <div class="form-group">
+            <label>Qual a finalidade do imóvel?</label>
+            <select id="finalidade">
+                <option value="primaria">Habitação Própria Permanente (1ª Habitação)</option>
+                <option value="secundaria">Habitação Secundária (Férias/Arrendamento)</option>
+            </select>
+        </div>
+
+        <div class="radio-group">
+            <div class="radio-item"><input type="radio" name="tipoComprador" value="solo" checked onchange="togglePartner()"> <label>Sozinho(a)</label></div>
+            <div class="radio-item"><input type="radio" name="tipoComprador" value="casal" onchange="togglePartner()"> <label>Com Parceiro(a)</label></div>
+        </div>
+
+        <div class="grid-2">
+            <div>
+                <div class="form-group"><label>A tua idade</label><input type="number" id="idade1" value="30"></div>
+                <div class="form-group"><label>O teu salário líquido mensal (€)</label><input type="number" id="salario1" value="1500"></div>
+                <div class="form-group"><label>Prestações de outros créditos seus (€/mês)</label><input type="number" id="creditos1" value="0"></div>
+            </div>
+            <div id="partner-section" class="hidden">
+                <div class="form-group"><label>Idade do parceiro(a)</label><input type="number" id="idade2" value="30"></div>
+                <div class="form-group"><label>Salário líquido do parceiro(a) (€)</label><input type="number" id="salario2" value="1500"></div>
+                <div class="form-group"><label>Outros créditos parceiro(a) (€/mês)</label><input type="number" id="creditos2" value="0"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>2. Condições do Banco</h2>
+        <div class="grid-2">
+            <div>
+                <div class="form-group">
+                    <label>Prazo do Empréstimo (Anos)</label>
+                    <input type="number" id="prazo" value="30" max="40">
+                    <small id="prazo-aviso" style="color: var(--danger); display: none; margin-top: 5px; display: block;">O prazo máximo legal é de <span id="prazo-max"></span> anos.</small>
+                </div>
+                <div class="form-group" id="box-isencao" style="margin-top: 20px;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" id="isencao_jovem" checked style="width: auto;"> Aplicar Isenção IMT Jovem (Até 35 anos)
+                    </label>
+                </div>
+            </div>
+            <div>
+                <label>Tipo de Taxa</label>
+                <div class="radio-group" style="margin-bottom: 12px;">
+                    <div class="radio-item"><input type="radio" name="tipoTaxa" value="variavel" checked onchange="toggleTaxa()"> <label>Variável</label></div>
+                    <div class="radio-item"><input type="radio" name="tipoTaxa" value="fixa" onchange="toggleTaxa()"> <label>Fixa</label></div>
+                </div>
+
+                <div id="taxa-variavel-box" class="taxa-box">
+                    <div class="grid-2" style="gap: 12px;">
+                        <div class="form-group" style="margin-bottom:0;"><label>Euribor (%)</label><input type="number" id="euribor" value="3.5" step="0.1"></div>
+                        <div class="form-group" style="margin-bottom:0;"><label>Spread (%)</label><input type="number" id="spread" value="0.8" step="0.1"></div>
+                    </div>
+                </div>
+                <div id="taxa-fixa-box" class="taxa-box hidden">
+                    <div class="form-group" style="margin-bottom:0;"><label>Taxa Fixa (%)</label><input type="number" id="taxa_fixa" value="4.0" step="0.1"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>3. Custos Adicionais e Mensais (Realidade)</h2>
+        <div class="alert alert-info" style="padding: 12px 16px; font-size: 0.95rem;">
+            Os bancos exigem seguros para aprovar o crédito. Além disso, ser proprietário implica impostos anuais, condomínio e manutenção.
+        </div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Seguro de Vida (€/mês) <small style="font-weight: normal; color: var(--text-muted);">(Estimativa)</small></label>
+                <input type="number" id="seguro_vida" value="25" step="5">
+            </div>
+            <div class="form-group">
+                <label>Seguro Multirriscos (€/mês)</label>
+                <input type="number" id="seguro_casa" value="15" step="5">
+            </div>
+            <div class="form-group">
+                <label>Condomínio (€/mês)</label>
+                <input type="number" id="condominio" value="40" step="5">
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Reserva de Manutenção/IMI (€/mês)</label>
+                <input type="number" id="manutencao" value="50" step="10">
+            </div>
+            <div class="form-group">
+                <label>Custos de Processo/Escritura (€) <small style="font-weight: normal; color: var(--text-muted);">(Aprox. 1.5k a 2.5k)</small></label>
+                <input type="number" id="custo_escritura" value="2000" step="100">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>4. O que pretende simular?</h2>
+        <div class="radio-group" style="flex-direction: column;">
+            <div class="radio-item"><input type="radio" name="modoCalculo" value="imovel" checked onchange="toggleModo()"> <label>Já sei o Valor do Imóvel</label></div>
+            <div class="radio-item"><input type="radio" name="modoCalculo" value="esforco" onchange="toggleModo()"> <label>Saber até quanto posso comprar (Taxa de Esforço do Banco)</label></div>
+        </div>
+
+        <hr>
+
+        <div id="modo-imovel">
+            <div class="form-group">
+                <label>Valor de Compra do Imóvel (€)</label>
+                <input type="number" id="valor_imovel" value="200000" oninput="atualizarEntrada()">
+            </div>
+            <div class="form-group">
+                <label>A tua Entrada Inicial (€) - <span id="label-entrada-minima" style="color: var(--primary);">Mínimo: 20,000€</span></label>
+                <input type="number" id="entrada" value="20000">
+            </div>
+        </div>
+
+        <div id="modo-esforco" class="hidden">
+            <div class="form-group">
+                <label>Taxa de Esforço Máxima Desejada (%)</label>
+                <input type="number" id="taxa_esforco_alvo" value="30" max="50" min="10">
+            </div>
+        </div>
+        
+        <button class="btn" onclick="simular()">Calcular Simulação Completa</button>
+    </div>
+
+    <div class="card results-area" id="resultados">
+        <h2>📊 O teu Raio-X Financeiro</h2>
+        <div id="resultado-msg"></div>
+
+        <div class="metric-grid">
+            <div class="metric-card">
+                <div class="metric-label">Prestação (Só Banco)</div>
+                <div class="metric-value" id="res-prestacao">€ 0,00</div>
+                <small id="res-taxa-aplicada" style="color: var(--text-muted); font-weight: 600;"></small>
+            </div>
+            <div class="metric-card highlight">
+                <div class="metric-label">Custo Mensal Real</div>
+                <div class="metric-value highlight-text" id="res-custo-real">€ 0,00</div>
+                <small style="color: var(--text-muted); font-weight: 500;">Prestação + Seguros + Cond. + Manut.</small>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Capital p/ Escritura</div>
+                <div class="metric-value" id="res-capital">€ 0,00</div>
+                <small style="color: var(--text-muted); font-weight: 500;">Entrada + Impostos + Custos Banco</small>
+            </div>
+        </div>
+
+        <div class="grid-2" style="margin-top: 40px;">
+            <div>
+                <h3 style="font-size: 1.1rem; margin-bottom: 5px;">Taxa de Esforço Bancária (Aprovação)</h3>
+                <p style="margin-top: 0; font-size: 0.9rem; color: var(--text-muted);">Calculada apenas com créditos: <strong id="res-esforco-txt" style="color: var(--text-main);">0%</strong></p>
+                <div class="progress-bar"><div class="progress-fill" id="res-esforco-bar"></div></div>
+                <div id="res-esforco-aviso" class="alert" style="margin-top: 15px; font-size:0.9rem;"></div>
+            </div>
+            <div>
+                <h3 style="font-size: 1.1rem; margin-bottom: 5px;">O Teu Esforço Real (Orçamento)</h3>
+                <p style="margin-top: 0; font-size: 0.9rem; color: var(--text-muted);">Calculado com todos os custos da casa: <strong id="res-esforco-real-txt" style="color: var(--text-main);">0%</strong></p>
+                <div class="progress-bar"><div class="progress-fill" id="res-esforco-real-bar"></div></div>
+                <div id="res-esforco-real-aviso" class="alert" style="margin-top: 15px; font-size:0.9rem;"></div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="grid-2">
+            <div>
+                <h3 style="font-size: 1.2rem;"> Necessidade de Capital (Escritura)</h3>
+                <ul class="list-group">
+                    <li><span style="color: var(--text-muted);">Valor do Imóvel:</span> <strong id="det-imovel"></strong></li>
+                    <li><span style="color: var(--text-muted);">Entrada Inicial:</span> <strong id="det-entrada"></strong></li>
+                    <li><span style="color: var(--text-muted);">IMT Estimado:</span> <strong id="det-imt"></strong></li>
+                    <li><span style="color: var(--text-muted);">Imposto de Selo:</span> <strong id="det-is"></strong></li>
+                    <li><span style="color: var(--text-muted);">Custos Processo/Notário:</span> <strong id="det-proc"></strong></li>
+                    <li style="background: var(--bg); padding: 12px; margin-top: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>Total a ter na conta:</strong> <strong id="det-total-inicio" style="color: var(--primary); font-size:1.15rem;"></strong>
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <h3 style="font-size: 1.2rem;"> As Tuas Despesas Mensais Reais</h3>
+                <ul class="list-group">
+                    <li><span style="color: var(--text-muted);">Prestação do Crédito:</span> <strong id="det-mensal-banco"></strong></li>
+                    <li><span style="color: var(--text-muted);">Seguro de Vida:</span> <strong id="det-seguro-vida"></strong></li>
+                    <li><span style="color: var(--text-muted);">Seguro Multirriscos:</span> <strong id="det-seguro-casa"></strong></li>
+                    <li><span style="color: var(--text-muted);">Condomínio:</span> <strong id="det-cond"></strong></li>
+                    <li><span style="color: var(--text-muted);">Fundo Manutenção / IMI:</span> <strong id="det-manut"></strong></li>
+                    <li style="background: var(--highlight-bg); padding: 12px; margin-top: 12px; border-radius: 8px; border: 1px solid var(--highlight-border);">
+                        <strong>Total Mensal Real:</strong> <strong id="det-total-mensal" style="color: var(--purple); font-size:1.15rem;"></strong>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- LÓGICA DO TEMA (DARK / LIGHT MODE) ---
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    
+    // Verifica o tema guardado ou a preferência do sistema
+    const currentTheme = localStorage.getItem('theme') || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    
+    if (currentTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeToggleBtn.innerText = '☀️ Modo Claro';
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+        let theme = document.documentElement.getAttribute('data-theme');
+        if (theme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+            themeToggleBtn.innerText = '🌙 Modo Escuro';
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            themeToggleBtn.innerText = '☀️ Modo Claro';
+        }
+    });
+
+    // --- FUNÇÕES CORE DO SIMULADOR ---
+    function calcularPrestacao(montante, taxaAnual, anos) {
+        if (taxaAnual === 0) return montante / (anos * 12);
+        let taxaMensal = (taxaAnual / 100) / 12;
+        let meses = anos * 12;
+        return montante * (taxaMensal * Math.pow(1 + taxaMensal, meses)) / (Math.pow(1 + taxaMensal, meses) - 1);
+    }
+
+    function calcularMontanteMaximo(prestacaoMensal, taxaAnual, anos) {
+        if (prestacaoMensal <= 0) return 0;
+        if (taxaAnual === 0) return prestacaoMensal * anos * 12;
+        let taxaMensal = (taxaAnual / 100) / 12;
+        let meses = anos * 12;
+        return prestacaoMensal * (1 - Math.pow(1 + taxaMensal, -meses)) / taxaMensal;
+    }
+
+    function limiteAnosBdP(idade) {
+        if (idade <= 30) return 40;
+        if (idade <= 35) return 37;
+        return 35;
+    }
+
+    function calcularImpostos(valor, finalidade, isencaoJovem) {
+        let is = valor * 0.008;
+        let imt = 0;
+        if (finalidade === "primaria") {
+            if (isencaoJovem && valor <= 316272) return { imt: 0, is: 0 }; 
+            if (valor <= 101917) imt = 0;
+            else if (valor <= 139412) imt = valor * 0.02 - 2038.34;
+            else if (valor <= 190086) imt = valor * 0.05 - 6220.70;
+            else if (valor <= 316272) imt = valor * 0.07 - 10022.42;
+            else if (valor <= 633453) imt = valor * 0.08 - 13185.14;
+            else imt = valor * 0.075;
+        } else {
+            if (valor <= 101917) imt = valor * 0.01;
+            else if (valor <= 139412) imt = valor * 0.02 - 1019.17;
+            else if (valor <= 190086) imt = valor * 0.05 - 5201.53;
+            else if (valor <= 316272) imt = valor * 0.07 - 9003.25;
+            else if (valor <= 633453) imt = valor * 0.08 - 12165.97;
+            else imt = valor * 0.075;
+        }
+        return { imt: Math.max(0, imt), is: is };
+    }
+
+    function formatMoney(num) { return num.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'; }
+
+    // --- INTERFACE (UI) ---
+    function togglePartner() {
+        document.getElementById('partner-section').classList.toggle('hidden', document.querySelector('input[name="tipoComprador"]:checked').value !== "casal");
+    }
+
+    function toggleModo() {
+        let isImovel = document.querySelector('input[name="modoCalculo"]:checked').value === "imovel";
+        document.getElementById('modo-imovel').classList.toggle('hidden', !isImovel);
+        document.getElementById('modo-esforco').classList.toggle('hidden', isImovel);
+    }
+
+    function toggleTaxa() {
+        let isVariavel = document.querySelector('input[name="tipoTaxa"]:checked').value === "variavel";
+        document.getElementById('taxa-variavel-box').classList.toggle('hidden', !isVariavel);
+        document.getElementById('taxa-fixa-box').classList.toggle('hidden', isVariavel);
+    }
+
+    function atualizarEntrada() {
+        let valor = parseFloat(document.getElementById('valor_imovel').value) || 0;
+        let finalidade = document.getElementById('finalidade').value;
+        let percMinima = finalidade === "primaria" ? 0.10 : 0.20;
+        let entradaMinima = valor * percMinima;
+        document.getElementById('label-entrada-minima').innerText = `Mínimo recomendado: ${formatMoney(entradaMinima)}`;
+        document.getElementById('entrada').value = entradaMinima;
+    }
+
+    document.getElementById('finalidade').addEventListener('change', function() {
+        document.getElementById('box-isencao').style.display = this.value === "primaria" ? "block" : "none";
+        atualizarEntrada();
+    });
+
+    window.onload = () => {
+        atualizarEntrada();
+        document.getElementById('prazo-max').innerText = limiteAnosBdP(parseInt(document.getElementById('idade1').value) || 30);
+    };
+
+    // --- EXECUÇÃO DA SIMULAÇÃO ---
+    function simular() {
+        let isCasal = document.querySelector('input[name="tipoComprador"]:checked').value === "casal";
+        let idade1 = parseInt(document.getElementById('idade1').value) || 0;
+        let sal1 = parseFloat(document.getElementById('salario1').value) || 0;
+        let cred1 = parseFloat(document.getElementById('creditos1').value) || 0;
+        
+        let idadeMax = idade1; let rendimentoTotal = sal1; let creditosTotais = cred1; let jovensElegiveis = idade1 <= 35;
+
+        if (isCasal) {
+            let idade2 = parseInt(document.getElementById('idade2').value) || 0;
+            let sal2 = parseFloat(document.getElementById('salario2').value) || 0;
+            let cred2 = parseFloat(document.getElementById('creditos2').value) || 0;
+            idadeMax = Math.max(idade1, idade2); rendimentoTotal += sal2; creditosTotais += cred2;
+            jovensElegiveis = (idade1 <= 35 && idade2 <= 35);
+        }
+
+        let prazoMaxLegal = limiteAnosBdP(idadeMax);
+        let prazoPedido = parseInt(document.getElementById('prazo').value) || 0;
+        
+        if (prazoPedido > prazoMaxLegal) {
+            document.getElementById('prazo-aviso').style.display = "block";
+            document.getElementById('prazo-max').innerText = prazoMaxLegal;
+            prazoPedido = prazoMaxLegal;
+        } else {
+            document.getElementById('prazo-aviso').style.display = "none";
+        }
+
+        let tipoTaxa = document.querySelector('input[name="tipoTaxa"]:checked').value;
+        let taxaFinal = tipoTaxa === "variavel" ? (parseFloat(document.getElementById('euribor').value) || 0) + (parseFloat(document.getElementById('spread').value) || 0) : (parseFloat(document.getElementById('taxa_fixa').value) || 0);
+
+        let finalidade = document.getElementById('finalidade').value;
+        let isencaoMarcada = document.getElementById('isencao_jovem').checked;
+        let aplicaIsencaoJovem = finalidade === "primaria" && isencaoMarcada && jovensElegiveis;
+        
+        let percFinanciamentoMax = finalidade === "primaria" ? 0.90 : 0.80;
+
+        // Custos Mensais Extras
+        let segVida = parseFloat(document.getElementById('seguro_vida').value) || 0;
+        let segCasa = parseFloat(document.getElementById('seguro_casa').value) || 0;
+        let condominio = parseFloat(document.getElementById('condominio').value) || 0;
+        let manutencao = parseFloat(document.getElementById('manutencao').value) || 0;
+        let extraMensal = segVida + segCasa + condominio + manutencao;
+
+        let modo = document.querySelector('input[name="modoCalculo"]:checked').value;
+        let valorImovel, entrada, montanteFinanciado, prestacaoMensal, taxaEsforcoBanco;
+
+        if (modo === "imovel") {
+            valorImovel = parseFloat(document.getElementById('valor_imovel').value) || 0;
+            entrada = parseFloat(document.getElementById('entrada').value) || 0;
+            montanteFinanciado = valorImovel - entrada;
+            prestacaoMensal = calcularPrestacao(montanteFinanciado, taxaFinal, prazoPedido);
+            taxaEsforcoBanco = ((prestacaoMensal + creditosTotais) / rendimentoTotal) * 100;
+            document.getElementById('resultado-msg').innerHTML = "";
+        } else {
+            let esforcoAlvo = parseFloat(document.getElementById('taxa_esforco_alvo').value) || 0;
+            prestacaoMensal = ((esforcoAlvo / 100) * rendimentoTotal) - creditosTotais;
+            if (prestacaoMensal <= 0) { alert("Os seus créditos atuais já ultrapassam o esforço desejado!"); return; }
+            
+            montanteFinanciado = calcularMontanteMaximo(prestacaoMensal, taxaFinal, prazoPedido);
+            valorImovel = montanteFinanciado / percFinanciamentoMax;
+            entrada = valorImovel * (1 - percFinanciamentoMax);
+            taxaEsforcoBanco = esforcoAlvo;
+
+            document.getElementById('resultado-msg').innerHTML = 
+                `<div class="alert alert-success">Para uma Taxa de Esforço de ${esforcoAlvo}%, pode comprar uma casa até <strong>${formatMoney(valorImovel)}</strong>.</div>`;
+        }
+
+        let custoMensalReal = prestacaoMensal + extraMensal;
+        let taxaEsforcoReal = ((custoMensalReal + creditosTotais) / rendimentoTotal) * 100;
+
+        let impostos = calcularImpostos(valorImovel, finalidade, aplicaIsencaoJovem);
+        let custoProcesso = parseFloat(document.getElementById('custo_escritura').value) || 0;
+        let capitalNecessario = entrada + impostos.imt + impostos.is + custoProcesso;
+
+        // UI Updates
+        document.getElementById('res-prestacao').innerText = formatMoney(prestacaoMensal);
+        document.getElementById('res-custo-real').innerText = formatMoney(custoMensalReal);
+        document.getElementById('res-taxa-aplicada').innerText = `À taxa de ${taxaFinal.toFixed(2)}%`;
+        document.getElementById('res-capital').innerText = formatMoney(capitalNecessario);
+        
+        // Detalhes Iniciais
+        document.getElementById('det-imovel').innerText = formatMoney(valorImovel);
+        document.getElementById('det-entrada').innerText = formatMoney(entrada);
+        document.getElementById('det-imt').innerText = formatMoney(impostos.imt);
+        document.getElementById('det-is').innerText = formatMoney(impostos.is);
+        document.getElementById('det-proc').innerText = formatMoney(custoProcesso);
+        document.getElementById('det-total-inicio').innerText = formatMoney(capitalNecessario);
+
+        // Detalhes Mensais
+        document.getElementById('det-mensal-banco').innerText = formatMoney(prestacaoMensal);
+        document.getElementById('det-seguro-vida').innerText = formatMoney(segVida);
+        document.getElementById('det-seguro-casa').innerText = formatMoney(segCasa);
+        document.getElementById('det-cond').innerText = formatMoney(condominio);
+        document.getElementById('det-manut').innerText = formatMoney(manutencao);
+        document.getElementById('det-total-mensal').innerText = formatMoney(custoMensalReal);
+
+        // Barras de Esforço
+        function atualizarBarra(txtId, barId, avisoId, taxa) {
+            document.getElementById(txtId).innerText = `${taxa.toFixed(1)}%`;
+            let barra = document.getElementById(barId);
+            let aviso = document.getElementById(avisoId);
+            barra.style.width = Math.min(taxa, 100) + "%";
+            
+            if (taxa <= 33) {
+                barra.style.backgroundColor = "var(--success)"; aviso.className = "alert alert-success";
+                aviso.innerHTML = "🟢 <strong>Saudável</strong> e com margem de segurança.";
+            } else if (taxa <= 40) {
+                barra.style.backgroundColor = "var(--warning)"; aviso.className = "alert alert-warning";
+                aviso.innerHTML = "🟡 <strong>Elevado.</strong> Pode haver aperto no orçamento familiar.";
+            } else {
+                barra.style.backgroundColor = "var(--danger)"; aviso.className = "alert alert-danger";
+                aviso.innerHTML = "🔴 <strong>Risco Crítico.</strong> Elevada probabilidade de rejeição bancária / incumprimento.";
+            }
+        }
+        atualizarBarra('res-esforco-txt', 'res-esforco-bar', 'res-esforco-aviso', taxaEsforcoBanco);
+        atualizarBarra('res-esforco-real-txt', 'res-esforco-real-bar', 'res-esforco-real-aviso', taxaEsforcoReal);
+
+        document.getElementById('resultados').style.display = "block";
+        document.getElementById('resultados').scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+
+</body>
+</html>
